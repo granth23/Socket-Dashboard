@@ -1,0 +1,23 @@
+name: socket-dash
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - setuptools
+  - wheel
+  - ca-certificates
+  - libffi
+  - openssl
+  - sqlite
+  - pip:
+      - blinker
+      - click
+      - colorama
+      - flask
+      - importlib-metadata
+      - itsdangerous
+      - jinja2
+      - markupsafe
+      - werkzeug
+      - zipp
