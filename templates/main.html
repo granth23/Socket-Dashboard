@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Live Factory Data Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        /* Professional Banner Styles */
+        .banner {
+            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .banner::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            pointer-events: none;
+        }
+
+        .banner-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .banner-left {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-placeholder {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 11px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .logo-placeholder:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .banner-title {
+            margin-left: 20px;
+        }
+
+        .banner-title h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.5px;
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .banner-subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+            font-weight: 300;
+            color: rgba(0, 0, 0, 0.9);
+        }
+
+        .banner-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px 20px;
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #4CAF50;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .status-text {
+            font-weight: 600;
+            font-size: 14px;
+            color: #000;
+        }
+
+        .last-updated {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            opacity: 0.9;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #000;
+        }
+
+        .last-updated strong {
+            font-weight: 600;
+        }
+
+        /* Navigation Menu */
+        .nav-menu {
+            background: white;
+            border-bottom: 2px solid #e0e6ed;
+            padding: 0 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 0;
+        }
+
+        .nav-item {
+            padding: 18px 30px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            color: #5a6c7d;
+            font-size: 14px;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            color: #2a5298;
+            transform: translateY(-1px);
+        }
+
+        .nav-item.active {
+            color: #2a5298;
+            border-bottom-color: #2a5298;
+            background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 25px 30px;
+        }
+
+        #mainContainer {
+            display: flex;
+            gap: 25px;
+            height: calc(100vh - 220px);
+        }
+
+        #chartSection {
+            flex: 2;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8eef5;
+        }
+
+        #areasSection {
+            flex: 1;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e8eef5;
+        }
+
+        #chartContainer {
+            height: 100%;
+            position: relative;
+        }
+
+        #machineChart {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #areasContainer {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .area-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 15px 18px;
+            cursor: pointer;
+            margin-bottom: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #495057;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .area-header::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #2a5298;
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .area-header:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .area-header:hover::before,
+        .area-header.active::before {
+            transform: scaleY(1);
+        }
+
+        .area-header.active {
+            background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+            color: white;
+            box-shadow: 0 6px 15px rgba(42, 82, 152, 0.3);
+        }
+
+        .machines-container {
+            display: none;
+            border: 1px solid #e9ecef;
+            margin-bottom: 15px;
+            padding: 15px;
+            max-height: 320px;
+            overflow-y: auto;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            box-sizing: border-box;
+            background: #fafbfc;
+            border-radius: 8px;
+        }
+
+        .machine-button {
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            background: white;
+            cursor: pointer;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 0;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .machine-button:hover {
+            background: #2a5298;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 8px rgba(42, 82, 152, 0.3);
+        }
+
+        /* Scrollbar Styling */
+        .machines-container::-webkit-scrollbar,
+        #areasContainer::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .machines-container::-webkit-scrollbar-track,
+        #areasContainer::-webkit-scrollbar-track {
+            background: #f1f3f5;
+            border-radius: 3px;
+        }
+
+        .machines-container::-webkit-scrollbar-thumb,
+        #areasContainer::-webkit-scrollbar-thumb {
+            background: #ced4da;
+            border-radius: 3px;
+        }
+
+        .machines-container::-webkit-scrollbar-thumb:hover,
+        #areasContainer::-webkit-scrollbar-thumb:hover {
+            background: #adb5bd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .banner-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .banner-title h1 {
+                font-size: 28px;
+            }
+
+            #mainContainer {
+                flex-direction: column;
+                height: auto;
+            }
+
+            #chartSection,
+            #areasSection {
+                flex: none;
+            }
+
+            #areasSection {
+                height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .banner {
+                padding: 15px 20px;
+            }
+
+            .logo-placeholder {
+                width: 50px;
+                height: 50px;
+                font-size: 9px;
+            }
+
+            .banner-title h1 {
+                font-size: 24px;
+            }
+
+            .nav-items {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .nav-item {
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+
+            .main-content {
+                padding: 15px 20px;
+            }
+
+            .machines-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Professional Banner -->
+    <div class="banner">
+        <div class="banner-content">
+            <div class="banner-left">
+                <div class="logo-container">
+                    <img src="static/logo1.png" alt="Company Logo1" width="200">
+                </div>
+            </div>
+            <div class="banner-title">
+                    <h1>Factory Monitoring System</h1>
+                    <div class="banner-subtitle">Real-time Industrial Data Analytics & Machine Performance</div>
+                </div>
+            <div class="banner-right">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span class="status-text">Live Data</span>
+                </div>
+                <div class="last-updated">
+                    <strong>Last Updated:</strong> <span id="lastUpdateTime">--</span>
+                </div>
+                <img src="static/logo2.png" alt="Company Logo2" width="300">
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="nav-menu">
+        <div class="nav-items">
+            <div class="nav-item active">Overall View</div>
+            <div class="nav-item">Health Summary</div>
+            <div class="nav-item">Health Status</div>
+            <div class="nav-item">Corrections Summary</div>
+            <div class="nav-item">Corrections Status</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div id="mainContainer">
+            <div id="chartSection">
+                <div id="chartContainer">
+                    <canvas id="machineChart" width="1500" height="750"></canvas>
+                </div>
+            </div>
+
+            <div id="areasSection">
+                <div id="areasContainer">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let factoryAreasData = [];
+        let currentChart = null;
+        let eventSourceMachine = null;
+        let eventSourceAreas = null;
+
+        // Update timestamp function
+        function updateTimestamp() {
+            const now = new Date();
+            const timestamp = now.toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            document.getElementById('lastUpdateTime').textContent = timestamp;
+        }
+
+        // Initialize when page loads
+        window.onload = async function () {
+            await loadFactoryAreas();
+            subscribeToAreaCounts();
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+        };
+
+        // Load factory areas from API
+        async function loadFactoryAreas() {
+            try {
+                const response = await fetch('/api/factory_areas');
+                factoryAreasData = await response.json();
+                renderFactoryAreas();
+            } catch (err) {
+                console.error('Error loading factory areas:', err);
+            }
+        }
+
+        // Render factory areas in the UI
+        function renderFactoryAreas() {
+            const container = document.getElementById('areasContainer');
+            container.innerHTML = '';
+
+            factoryAreasData.forEach((area, areaIndex) => {
+                const header = document.createElement('div');
+                header.className = 'area-header';
+                header.id = 'area-header-' + area.id;
+                header.textContent = area.name + ' (0)';
+                header.dataset.areaId = area.id;
+
+                const machinesContainer = document.createElement('div');
+                machinesContainer.className = 'machines-container';
+                machinesContainer.id = 'machines-container-' + area.id;
+
+                area.machines.forEach((machine) => {
+                    const machineBtn = document.createElement('button');
+                    machineBtn.className = 'machine-button';
+                    machineBtn.textContent = machine.name;
+                    machineBtn.addEventListener('click', () => {
+                        subscribeToMachine(machine.id);
+                    });
+                    machinesContainer.appendChild(machineBtn);
+                });
+
+                container.appendChild(header);
+                container.appendChild(machinesContainer);
+
+                header.addEventListener('click', function () {
+                    const thisContainer = document.getElementById('machines-container-' + this.dataset.areaId);
+
+                    if (thisContainer.style.display === 'grid') {
+                        thisContainer.style.display = 'none';
+                        this.classList.remove('active');
+                    } else {
+                        // Close all other containers
+                        document.querySelectorAll('.machines-container').forEach(container => {
+                            container.style.display = 'none';
+                        });
+
+                        document.querySelectorAll('.area-header').forEach(h => {
+                            h.classList.remove('active');
+                        });
+
+                        thisContainer.style.display = 'grid';
+                        this.classList.add('active');
+                    }
+                });
+            });
+
+            // Auto-open first area and select first machine
+            if (factoryAreasData.length > 0) {
+                const firstAreaId = factoryAreasData[0].id;
+                const firstHeader = document.getElementById('area-header-' + firstAreaId);
+                const firstContainer = document.getElementById('machines-container-' + firstAreaId);
+                if (firstHeader && firstContainer) {
+                    firstHeader.classList.add('active');
+                    firstContainer.style.display = 'grid';
+
+                    if (factoryAreasData[0].machines.length > 0) {
+                        subscribeToMachine(factoryAreasData[0].machines[0].id);
+                    }
+                }
+            }
+        }
+
+        // Subscribe to machine data stream
+        function subscribeToMachine(machineId) {
+            if (eventSourceMachine) {
+                eventSourceMachine.close();
+            }
+            eventSourceMachine = new EventSource('/stream/' + machineId);
+            eventSourceMachine.onmessage = (e) => {
+                const parsed = JSON.parse(e.data);
+                updateChart(parsed);
+            };
+            eventSourceMachine.onerror = (err) => {
+                console.error("SSE connection (machine) error:", err);
+            };
+        }
+
+        // Update chart with new data
+        function updateChart(streamData) {
+            const ctx = document.getElementById('machineChart').getContext('2d');
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const xValues = streamData.data.map(item => item[0]);
+            const yValues = streamData.data.map(item => item[1]);
+
+            currentChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: xValues,
+                    datasets: [{
+                        label: 'Machine ' + streamData.machine_id,
+                        data: yValues,
+                        borderColor: '#2a5298',
+                        backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#2a5298',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 14,
+                                    weight: '500'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)',
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        line: {
+                            tension: 0.4
+                        }
+                    }
+                }
+            });
+        }
+
+        // Subscribe to area counts stream
+        function subscribeToAreaCounts() {
+            eventSourceAreas = new EventSource('/stream_areas');
+            eventSourceAreas.onmessage = (e) => {
+                const areaCounts = JSON.parse(e.data);
+
+                for (let areaId in areaCounts) {
+                    const countVal = areaCounts[areaId];
+                    const headerEl = document.getElementById('area-header-' + areaId);
+                    if (headerEl) {
+                        const oldText = headerEl.textContent;
+                        const baseName = oldText.split("(")[0].trim();
+                        headerEl.textContent = baseName + " (" + countVal + ")";
+                    }
+                }
+            };
+            eventSourceAreas.onerror = (err) => {
+                console.error("SSE connection (areas) error:", err);
+            };
+        }
+
+        // Navigation item click handlers
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function () {
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+
+</html>
