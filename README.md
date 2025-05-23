@@ -18,8 +18,8 @@ Follow the platform-specific installation guide provided there.
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
+git clone https://github.com/granth23/Socket-Dashboard
+cd Socket-Dashboard
 ````
 
 ---
@@ -29,17 +29,14 @@ cd your-repo-name
 Create the environment using the provided `environment.yaml`:
 
 ```bash
-conda env create -f environment.yaml
+conda env create -f environment.yml
 ```
 
 Activate the environment:
 
 ```bash
-conda activate flask-app
+conda activate socket-dash
 ```
-
-> Replace `flask-app` with the name defined in your `environment.yaml` if it’s different.
-
 ---
 
 ### 4. Run the Application
