@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Live Factory Data Dashboard</title>
+    <title>Vibration Analysis Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -20,7 +20,7 @@
 
         /* Professional Banner Styles */
         .banner {
-            background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             padding: 20px 30px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -91,14 +91,12 @@
             margin-bottom: 8px;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
             letter-spacing: -0.5px;
-            color: rgba(0, 0, 0, 0.9);
         }
 
         .banner-subtitle {
             font-size: 16px;
             opacity: 0.9;
             font-weight: 300;
-            color: rgba(0, 0, 0, 0.9);
         }
 
         .banner-right {
@@ -147,7 +145,6 @@
         .status-text {
             font-weight: 600;
             font-size: 14px;
-            color: #000;
         }
 
         .last-updated {
@@ -157,7 +154,6 @@
             font-size: 13px;
             opacity: 0.9;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #000;
         }
 
         .last-updated strong {
@@ -212,8 +208,8 @@
             height: calc(100vh - 220px);
         }
 
-        #chartSection {
-            flex: 2;
+        #chartsSection {
+            flex: 3;
             background: white;
             border-radius: 15px;
             padding: 25px;
@@ -230,14 +226,78 @@
             border: 1px solid #e8eef5;
         }
 
-        #chartContainer {
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
             height: 100%;
-            position: relative;
         }
 
-        #machineChart {
-            max-width: 100%;
-            height: auto;
+        .chart-container {
+            background: #fafbfc;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-title {
+            font-weight: 600;
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .chart-canvas {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .chart-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .rms-values {
+            display: flex;
+            gap: 15px;
+        }
+
+        .rms-value {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .axis-label {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .axis-x {
+            background-color: #ff6b6b;
+        }
+
+        .axis-y {
+            background-color: #4ecdc4;
+        }
+
+        .axis-z {
+            background-color: #45b7d1;
+        }
+
+        .peak-info {
+            font-size: 11px;
+            color: #888;
         }
 
         #areasContainer {
@@ -325,6 +385,12 @@
             box-shadow: 0 3px 8px rgba(42, 82, 152, 0.3);
         }
 
+        .machine-button.active {
+            background: #2a5298;
+            color: white;
+            box-shadow: 0 3px 8px rgba(42, 82, 152, 0.3);
+        }
+
         /* Scrollbar Styling */
         .machines-container::-webkit-scrollbar,
         #areasContainer::-webkit-scrollbar {
@@ -356,22 +422,23 @@
                 text-align: center;
             }
 
-            .banner-title h1 {
-                font-size: 28px;
-            }
-
             #mainContainer {
                 flex-direction: column;
                 height: auto;
             }
 
-            #chartSection,
+            #chartsSection,
             #areasSection {
                 flex: none;
             }
 
             #areasSection {
                 height: 400px;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 300px);
             }
         }
 
@@ -417,13 +484,13 @@
         <div class="banner-content">
             <div class="banner-left">
                 <div class="logo-container">
-                    <img src="static/logo1.png" alt="Company Logo1" width="200">
+                    <div class="logo-placeholder">VIBRO</div>
+                </div>
+                <div class="banner-title">
+                    <h1>Vibration Analysis System</h1>
+                    <div class="banner-subtitle">Real-time Machine Vibration Monitoring & FFT Analysis</div>
                 </div>
             </div>
-            <div class="banner-title">
-                    <h1>Factory Monitoring System</h1>
-                    <div class="banner-subtitle">Real-time Industrial Data Analytics & Machine Performance</div>
-                </div>
             <div class="banner-right">
                 <div class="status-indicator">
                     <div class="status-dot"></div>
@@ -432,7 +499,6 @@
                 <div class="last-updated">
                     <strong>Last Updated:</strong> <span id="lastUpdateTime">--</span>
                 </div>
-                <img src="static/logo2.png" alt="Company Logo2" width="300">
             </div>
         </div>
     </div>
@@ -440,20 +506,96 @@
     <!-- Navigation Menu -->
     <div class="nav-menu">
         <div class="nav-items">
-            <div class="nav-item active">Overall View</div>
+            <div class="nav-item active">Vibration Analysis</div>
             <div class="nav-item">Health Summary</div>
-            <div class="nav-item">Health Status</div>
-            <div class="nav-item">Corrections Summary</div>
-            <div class="nav-item">Corrections Status</div>
+            <div class="nav-item">Frequency Analysis</div>
+            <div class="nav-item">Anomaly Detection</div>
+            <div class="nav-item">Reports</div>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
         <div id="mainContainer">
-            <div id="chartSection">
-                <div id="chartContainer">
-                    <canvas id="machineChart" width="1500" height="750"></canvas>
+            <div id="chartsSection">
+                <div class="charts-grid">
+                    <!-- Acceleration Time Domain -->
+                    <div class="chart-container">
+                        <div class="chart-title">Acceleration Time Domain</div>
+                        <div class="chart-canvas">
+                            <canvas id="accelTimeChart"></canvas>
+                        </div>
+                        <div class="chart-info">
+                            <div class="rms-values">
+                                <div class="rms-value">
+                                    <span class="axis-label axis-x"></span>
+                                    <span>X: <span id="rmsAccX">0.00</span> m/s²</span>
+                                </div>
+                                <div class="rms-value">
+                                    <span class="axis-label axis-y"></span>
+                                    <span>Y: <span id="rmsAccY">0.00</span> m/s²</span>
+                                </div>
+                                <div class="rms-value">
+                                    <span class="axis-label axis-z"></span>
+                                    <span>Z: <span id="rmsAccZ">0.00</span> m/s²</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acceleration FFT -->
+                    <div class="chart-container">
+                        <div class="chart-title">Acceleration FFT</div>
+                        <div class="chart-canvas">
+                            <canvas id="accelFFTChart"></canvas>
+                        </div>
+                        <div class="chart-info">
+                            <div class="peak-info">
+                                <div>Peak X: <span id="peakAccX">--</span></div>
+                                <div>Peak Y: <span id="peakAccY">--</span></div>
+                                <div>Peak Z: <span id="peakAccZ">--</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Velocity Time Domain -->
+                    <div class="chart-container">
+                        <div class="chart-title">Velocity Time Domain</div>
+                        <div class="chart-canvas">
+                            <canvas id="velTimeChart"></canvas>
+                        </div>
+                        <div class="chart-info">
+                            <div class="rms-values">
+                                <div class="rms-value">
+                                    <span class="axis-label axis-x"></span>
+                                    <span>X: <span id="rmsVelX">0.00</span> mm/s</span>
+                                </div>
+                                <div class="rms-value">
+                                    <span class="axis-label axis-y"></span>
+                                    <span>Y: <span id="rmsVelY">0.00</span> mm/s</span>
+                                </div>
+                                <div class="rms-value">
+                                    <span class="axis-label axis-z"></span>
+                                    <span>Z: <span id="rmsVelZ">0.00</span> mm/s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Velocity FFT -->
+                    <div class="chart-container">
+                        <div class="chart-title">Velocity FFT</div>
+                        <div class="chart-canvas">
+                            <canvas id="velFFTChart"></canvas>
+                        </div>
+                        <div class="chart-info">
+                            <div class="peak-info">
+                                <div>Peak X: <span id="peakVelX">--</span></div>
+                                <div>Peak Y: <span id="peakVelY">--</span></div>
+                                <div>Peak Z: <span id="peakVelZ">--</span></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -469,9 +611,15 @@
     <script>
         // Global variables
         let factoryAreasData = [];
-        let currentChart = null;
+        let currentCharts = {
+            accelTime: null,
+            accelFFT: null,
+            velTime: null,
+            velFFT: null
+        };
         let eventSourceMachine = null;
         let eventSourceAreas = null;
+        let currentMachineId = null;
 
         // Update timestamp function
         function updateTimestamp() {
@@ -527,8 +675,9 @@
                     const machineBtn = document.createElement('button');
                     machineBtn.className = 'machine-button';
                     machineBtn.textContent = machine.name;
+                    machineBtn.dataset.machineId = machine.id;
                     machineBtn.addEventListener('click', () => {
-                        subscribeToMachine(machine.id);
+                        selectMachine(machine.id, machineBtn);
                     });
                     machinesContainer.appendChild(machineBtn);
                 });
@@ -568,10 +717,24 @@
                     firstContainer.style.display = 'grid';
 
                     if (factoryAreasData[0].machines.length > 0) {
-                        subscribeToMachine(factoryAreasData[0].machines[0].id);
+                        const firstMachineId = factoryAreasData[0].machines[0].id;
+                        const firstMachineBtn = firstContainer.querySelector(`[data-machine-id="${firstMachineId}"]`);
+                        selectMachine(firstMachineId, firstMachineBtn);
                     }
                 }
             }
+        }
+
+        // Select machine and update UI
+        function selectMachine(machineId, buttonElement) {
+            // Update button states
+            document.querySelectorAll('.machine-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            buttonElement.classList.add('active');
+
+            currentMachineId = machineId;
+            subscribeToMachine(machineId);
         }
 
         // Subscribe to machine data stream
@@ -582,121 +745,416 @@
             eventSourceMachine = new EventSource('/stream/' + machineId);
             eventSourceMachine.onmessage = (e) => {
                 const parsed = JSON.parse(e.data);
-                updateChart(parsed);
+                updateCharts(parsed);
             };
             eventSourceMachine.onerror = (err) => {
                 console.error("SSE connection (machine) error:", err);
             };
         }
 
-        // Update chart with new data
-        function updateChart(streamData) {
-            const ctx = document.getElementById('machineChart').getContext('2d');
-            if (currentChart) {
-                currentChart.destroy();
+        // Update all charts with new data
+        function updateCharts(streamData) {
+            const data = streamData.data;
+
+            // Update RMS values
+            updateRMSValues(data.rms_acc, data.rms_vel);
+
+            // Update peak information
+            updatePeakInfo(data.peaks_acc, data.peaks_vel);
+
+            // Update charts
+            updateAccelerationTimeChart(data.accel_time);
+            updateAccelerationFFTChart(data.accel_fft);
+            updateVelocityTimeChart(data.vel_time);
+            updateVelocityFFTChart(data.vel_fft);
+        }
+
+        // Update RMS values display
+        function updateRMSValues(rmsAcc, rmsVel) {
+            document.getElementById('rmsAccX').textContent = rmsAcc[0].toFixed(2);
+            document.getElementById('rmsAccY').textContent = rmsAcc[1].toFixed(2);
+            document.getElementById('rmsAccZ').textContent = rmsAcc[2].toFixed(2);
+
+            document.getElementById('rmsVelX').textContent = rmsVel[0].toFixed(2);
+            document.getElementById('rmsVelY').textContent = rmsVel[1].toFixed(2);
+            document.getElementById('rmsVelZ').textContent = rmsVel[2].toFixed(2);
+        }
+
+        // Update peak information display
+        function updatePeakInfo(peaksAcc, peaksVel) {
+            const formatPeak = (peak) => {
+                return peak ? `${peak.freq.toFixed(1)}Hz (${peak.mag.toFixed(3)})` : '--';
+            };
+
+            document.getElementById('peakAccX').textContent = formatPeak(peaksAcc.X);
+            document.getElementById('peakAccY').textContent = formatPeak(peaksAcc.Y);
+            document.getElementById('peakAccZ').textContent = formatPeak(peaksAcc.Z);
+
+            document.getElementById('peakVelX').textContent = formatPeak(peaksVel.X);
+            document.getElementById('peakVelY').textContent = formatPeak(peaksVel.Y);
+            document.getElementById('peakVelZ').textContent = formatPeak(peaksVel.Z);
+        }
+
+        // Update Acceleration Time Domain Chart
+        function updateAccelerationTimeChart(accelTime) {
+            const ctx = document.getElementById('accelTimeChart').getContext('2d');
+            if (currentCharts.accelTime) {
+                currentCharts.accelTime.destroy();
             }
 
-            const xValues = streamData.data.map(item => item[0]);
-            const yValues = streamData.data.map(item => item[1]);
+            // Take only last 100 samples
+            const last100X = accelTime.x.slice(-100);
+            const last100Y = accelTime.y.slice(-100);
+            const last100Z = accelTime.z.slice(-100);
+            const sampleLabels = last100X.map((_, i) => i);
 
-            currentChart = new Chart(ctx, {
+            currentCharts.accelTime = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: xValues,
-                    datasets: [{
-                        label: 'Machine ' + streamData.machine_id,
-                        data: yValues,
-                        borderColor: '#2a5298',
-                        backgroundColor: 'rgba(42, 82, 152, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#2a5298',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }]
+                    labels: sampleLabels,
+                    datasets: [
+                        {
+                            label: 'X-Axis',
+                            data: last100X,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Y-Axis',
+                            data: last100Y,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Z-Axis',
+                            data: last100Z,
+                            borderColor: '#45b7d1',
+                            backgroundColor: 'rgba(69, 183, 209, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20,
-                                font: {
-                                    size: 14,
-                                    weight: '500'
-                                }
-                            }
+                            display: false
                         }
                     },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: {
-                                color: 'rgba(0,0,0,0.05)',
-                                lineWidth: 1
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                }
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sample'
                             }
                         },
-                        x: {
-                            grid: {
-                                color: 'rgba(0,0,0,0.05)',
-                                lineWidth: 1
-                            },
-                            ticks: {
-                                font: {
-                                    size: 12
-                                }
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Acceleration (m/s²)'
                             }
                         }
+                    }
+                }
+            });
+        }
+
+        // Update Acceleration FFT Chart
+        // Update Acceleration FFT Chart
+        function updateAccelerationFFTChart(accelFFT) {
+            const ctx = document.getElementById('accelFFTChart').getContext('2d');
+            if (currentCharts.accelFFT) {
+                currentCharts.accelFFT.destroy();
+            }
+
+            // Limit to first 500 frequency points for better visualization
+            const limitedFreqs = accelFFT.frequencies.slice(0, 500);
+            const limitedX = accelFFT.x.slice(0, 500);
+            const limitedY = accelFFT.y.slice(0, 500);
+            const limitedZ = accelFFT.z.slice(0, 500);
+
+            currentCharts.accelFFT = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: limitedFreqs,
+                    datasets: [
+                        {
+                            label: 'X-Axis',
+                            data: limitedX,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Y-Axis',
+                            data: limitedY,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Z-Axis',
+                            data: limitedZ,
+                            borderColor: '#45b7d1',
+                            backgroundColor: 'rgba(69, 183, 209, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
                     },
-                    elements: {
-                        line: {
-                            tension: 0.4
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Frequency (Hz)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Magnitude'
+                            }
                         }
                     }
                 }
             });
         }
 
-        // Subscribe to area counts stream
-        function subscribeToAreaCounts() {
-            eventSourceAreas = new EventSource('/stream_areas');
-            eventSourceAreas.onmessage = (e) => {
-                const areaCounts = JSON.parse(e.data);
+        // Update Velocity FFT Chart  
+        function updateVelocityFFTChart(velFFT) {
+            const ctx = document.getElementById('velFFTChart').getContext('2d');
+            if (currentCharts.velFFT) {
+                currentCharts.velFFT.destroy();
+            }
 
-                for (let areaId in areaCounts) {
-                    const countVal = areaCounts[areaId];
-                    const headerEl = document.getElementById('area-header-' + areaId);
-                    if (headerEl) {
-                        const oldText = headerEl.textContent;
-                        const baseName = oldText.split("(")[0].trim();
-                        headerEl.textContent = baseName + " (" + countVal + ")";
+            // Limit to first 500 frequency points for better visualization
+            const limitedFreqs = velFFT.frequencies.slice(0, 500);
+            const limitedX = velFFT.x.slice(0, 500);
+            const limitedY = velFFT.y.slice(0, 500);
+            const limitedZ = velFFT.z.slice(0, 500);
+
+            currentCharts.velFFT = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: limitedFreqs,
+                    datasets: [
+                        {
+                            label: 'X-Axis',
+                            data: limitedX,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Y-Axis',
+                            data: limitedY,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Z-Axis',
+                            data: limitedZ,
+                            borderColor: '#45b7d1',
+                            backgroundColor: 'rgba(69, 183, 209, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Frequency (Hz)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Magnitude'
+                            }
+                        }
                     }
                 }
-            };
-            eventSourceAreas.onerror = (err) => {
-                console.error("SSE connection (areas) error:", err);
-            };
+            });
         }
 
-        // Navigation item click handlers
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function () {
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                this.classList.add('active');
+        // Update Velocity Time Domain Chart
+        function updateVelocityTimeChart(velTime) {
+            const ctx = document.getElementById('velTimeChart').getContext('2d');
+            if (currentCharts.velTime) {
+                currentCharts.velTime.destroy();
+            }
+
+            // Take only last 100 samples
+            const last100X = velTime.x.slice(-100);
+            const last100Y = velTime.y.slice(-100);
+            const last100Z = velTime.z.slice(-100);
+            const sampleLabels = last100X.map((_, i) => i);
+
+            currentCharts.velTime = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sampleLabels,
+                    datasets: [
+                        {
+                            label: 'X-Axis',
+                            data: last100X,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Y-Axis',
+                            data: last100Y,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Z-Axis',
+                            data: last100Z,
+                            borderColor: '#45b7d1',
+                            backgroundColor: 'rgba(69, 183, 209, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sample'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Velocity (mm/s)'
+                            }
+                        }
+                    }
+                }
             });
-        });
+        }
+
+        // Update Velocity FFT Chart  
+        function updateVelocityFFTChart(velFFT) {
+            const ctx = document.getElementById('velFFTChart').getContext('2d');
+            if (currentCharts.velFFT) {
+                currentCharts.velFFT.destroy();
+            }
+
+            // Limit to first 500 frequency points for better visualization
+            const limitedFreqs = velFFT.frequencies.slice(0, 500);
+            const limitedX = velFFT.x.slice(0, 500);
+            const limitedY = velFFT.y.slice(0, 500);
+            const limitedZ = velFFT.z.slice(0, 500);
+
+            currentCharts.velFFT = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: limitedFreqs,
+                    datasets: [
+                        {
+                            label: 'X-Axis',
+                            data: limitedX,
+                            borderColor: '#ff6b6b',
+                            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Y-Axis',
+                            data: limitedY,
+                            borderColor: '#4ecdc4',
+                            backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Z-Axis',
+                            data: limitedZ,
+                            borderColor: '#45b7d1',
+                            backgroundColor: 'rgba(69, 183, 209, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Frequency (Hz)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 8
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Magnitude'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
     </script>
 </body>
 
