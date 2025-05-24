@@ -5,6 +5,8 @@ import random
 import json
 import numpy as np
 from scipy.signal import find_peaks
+import socket
+import struct
 
 app = Flask(__name__)
 
@@ -13,6 +15,10 @@ BUFFER_SAMPLES = 2048
 G = 9.80665
 TO_MMPS = 1000
 SAMPLING_RATE = 26667
+
+# ESP32 connection constants
+TOTAL_FLOATS = BUFFER_SAMPLES * 3
+BYTES_NEEDED = TOTAL_FLOATS * 4
 
 factory_areas = []
 for i in range(1, 11):
@@ -74,48 +80,99 @@ def find_dominant_peak(freqs, mags):
     idx = peaks[np.argmax(mags[peaks])]
     return {"freq": float(freqs[idx]), "mag": float(mags[idx])}
 
-def generate_vibration_data():
-    """Generate realistic vibration data with multiple frequency components"""
-    # Generate base frequencies (simulating machine harmonics)
-    base_freq = random.uniform(10, 100)  # Main machine frequency
-    harmonics = [base_freq, base_freq * 2, base_freq * 3]
+# def generate_vibration_data():
+#     """Generate realistic vibration data with multiple frequency components - RANDOM DATA VERSION"""
+#     # Generate base frequencies (simulating machine harmonics)
+#     base_freq = random.uniform(10, 100)  # Main machine frequency
+#     harmonics = [base_freq, base_freq * 2, base_freq * 3]
     
-    # Generate time series
-    dt = 1/SAMPLING_RATE
-    t = np.linspace(0, BUFFER_SAMPLES * dt, BUFFER_SAMPLES)
+#     # Generate time series
+#     dt = 1/SAMPLING_RATE
+#     t = np.linspace(0, BUFFER_SAMPLES * dt, BUFFER_SAMPLES)
     
-    # Create 3-axis acceleration with multiple frequency components
-    accel_x = np.zeros(BUFFER_SAMPLES)
-    accel_y = np.zeros(BUFFER_SAMPLES)
-    accel_z = np.zeros(BUFFER_SAMPLES)
+#     # Create 3-axis acceleration with multiple frequency components
+#     accel_x = np.zeros(BUFFER_SAMPLES)
+#     accel_y = np.zeros(BUFFER_SAMPLES)
+#     accel_z = np.zeros(BUFFER_SAMPLES)
     
-    for freq in harmonics:
-        amplitude_x = random.uniform(0.1, 2.0)
-        amplitude_y = random.uniform(0.1, 2.0)
-        amplitude_z = random.uniform(0.1, 2.0)
-        phase_x = random.uniform(0, 2*np.pi)
-        phase_y = random.uniform(0, 2*np.pi)
-        phase_z = random.uniform(0, 2*np.pi)
+#     for freq in harmonics:
+#         amplitude_x = random.uniform(0.1, 2.0)
+#         amplitude_y = random.uniform(0.1, 2.0)
+#         amplitude_z = random.uniform(0.1, 2.0)
+#         phase_x = random.uniform(0, 2*np.pi)
+#         phase_y = random.uniform(0, 2*np.pi)
+#         phase_z = random.uniform(0, 2*np.pi)
         
-        accel_x += amplitude_x * np.sin(2 * np.pi * freq * t + phase_x)
-        accel_y += amplitude_y * np.sin(2 * np.pi * freq * t + phase_y)
-        accel_z += amplitude_z * np.sin(2 * np.pi * freq * t + phase_z)
+#         accel_x += amplitude_x * np.sin(2 * np.pi * freq * t + phase_x)
+#         accel_y += amplitude_y * np.sin(2 * np.pi * freq * t + phase_y)
+#         accel_z += amplitude_z * np.sin(2 * np.pi * freq * t + phase_z)
     
-    # Add noise
-    noise_level = 0.1
-    accel_x += np.random.normal(0, noise_level, BUFFER_SAMPLES)
-    accel_y += np.random.normal(0, noise_level, BUFFER_SAMPLES)
-    accel_z += np.random.normal(0, noise_level, BUFFER_SAMPLES)
+#     # Add noise
+#     noise_level = 0.1
+#     accel_x += np.random.normal(0, noise_level, BUFFER_SAMPLES)
+#     accel_y += np.random.normal(0, noise_level, BUFFER_SAMPLES)
+#     accel_z += np.random.normal(0, noise_level, BUFFER_SAMPLES)
     
-    # Scale by gravity and remove DC offset
-    accel_x *= G
-    accel_y *= G
-    accel_z *= G
-    accel_x -= accel_x.mean()
-    accel_y -= accel_y.mean()
-    accel_z -= accel_z.mean()
+#     # Scale by gravity and remove DC offset
+#     accel_x *= G
+#     accel_y *= G
+#     accel_z *= G
+#     accel_x -= accel_x.mean()
+#     accel_y -= accel_y.mean()
+#     accel_z -= accel_z.mean()
     
-    return accel_x, accel_y, accel_z
+#     return accel_x, accel_y, accel_z
+
+# ESP32 connection variable (global)
+esp32_connection = None
+
+def generate_vibration_data():
+    """Read vibration data from ESP32 - ESP32 DATA VERSION"""
+    global esp32_connection
+    
+    try:
+        # If no connection, try to establish one
+        if esp32_connection is None:
+            srv = socket.socket()
+            srv.bind(('0.0.0.0', 12345))
+            srv.listen(1)
+            print("Waiting for ESP32 connection...")
+            esp32_connection, _ = srv.accept()
+            print("ESP32 Connected!")
+        
+        # Receive exactly BUFFER_SAMPLES×3 floats
+        buf = b''
+        while len(buf) < BYTES_NEEDED:
+            chunk = esp32_connection.recv(4096)
+            if not chunk:
+                raise RuntimeError("ESP32 socket closed")
+            buf += chunk
+        
+        # Unpack & reshape data
+        data = np.array(struct.unpack('<'+'f'*TOTAL_FLOATS, buf),
+                       dtype=np.float32).reshape(-1, 3)
+        
+        # Extract 3-axis acceleration data
+        accel_x = data[:, 0]
+        accel_y = data[:, 1] 
+        accel_z = data[:, 2]
+        
+        # Scale by gravity and remove DC offset
+        accel_x *= G
+        accel_y *= G
+        accel_z *= G
+        accel_x -= accel_x.mean()
+        accel_y -= accel_y.mean()
+        accel_z -= accel_z.mean()
+        
+        return accel_x, accel_y, accel_z
+        
+    except Exception as e:
+        print(f"ESP32 connection error: {e}")
+        # Reset connection on error
+        esp32_connection = None
+        # Fall back to random data or raise error
+        raise RuntimeError("Failed to read from ESP32")
 
 def process_vibration_data(accel_x, accel_y, accel_z):
     """Process vibration data similar to the original analysis"""
@@ -212,14 +269,19 @@ def compute_variance(values):
 def background_data_generator():
     """Generate vibration data for all machines"""
     while True:
-        for m_id in machine_vibration_data:
-            # Generate new vibration data
-            accel_x, accel_y, accel_z = generate_vibration_data()
-            processed_data = process_vibration_data(accel_x, accel_y, accel_z)
-            
-            # Store the processed data
-            machine_vibration_data[m_id] = processed_data
-            machine_counters[m_id] += 1
+        try:
+            for m_id in machine_vibration_data:
+                # Generate new vibration data
+                accel_x, accel_y, accel_z = generate_vibration_data()
+                processed_data = process_vibration_data(accel_x, accel_y, accel_z)
+                
+                # Store the processed data
+                machine_vibration_data[m_id] = processed_data
+                machine_counters[m_id] += 1
+                
+        except Exception as e:
+            print(f"Data generation error: {e}")
+            # Continue with next iteration on error
             
         time.sleep(2)  # Update every 2 seconds
 
