@@ -19,5 +19,7 @@ dependencies:
       - itsdangerous
       - jinja2
       - markupsafe
+      - numpy
+      - scipy
       - werkzeug
       - zipp
